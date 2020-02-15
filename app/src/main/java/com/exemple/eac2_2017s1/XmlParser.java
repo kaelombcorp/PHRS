@@ -17,18 +17,18 @@ import java.util.List;
 
 public class XmlParser {
 
-    // No fem servir namespaces
+    // We do not use namespaces
     private static final String ns = null;
 
     public List<Entrada> analitza(InputStream in) throws XmlPullParserException, IOException {
         try {
-            //Obtenim analitzador
+            //We get analyzer
             XmlPullParser parser = Xml.newPullParser();
-            //No fem servir namespaces
+            //We do not use namespaces
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-            //Especifica l'entrada de l'analitzador
+            //Specifies the parser input
             parser.setInput(in, null);
-            //Obtenim la primera etiqueta
+            //We get the first label
             parser.nextTag();
             //Retornem la llista de noticies
             return leerNoticias(parser);
@@ -37,25 +37,25 @@ public class XmlParser {
         }
     }
 
-    //Llegeix una llista de noticies d'StackOverflow a partir del parser i retorna una llista d'Entrades
+    //Reads a list of StackOverflow news from the parser and returns a list of Entries
     private List<Entrada> leerNoticias(XmlPullParser parser) throws XmlPullParserException, IOException {
         List<Entrada> listaItems = new ArrayList<Entrada>();
-        //Comprova si l'event actual és del tipus esperat (START_TAG) i del nom "feed"
+        //Check if the current event is of the expected type (START_TAG) and the name "feed"
         parser.nextTag();
         parser.require(XmlPullParser.START_TAG, ns, "channel");
         //Mentre que no arribem al final d'etiqueta
 
         while (parser.next() != XmlPullParser.END_TAG) {
-            //Ignorem tots els events que no siguin un comenament d'etiqueta
+            //We ignore all events that are not a tag start
             if (parser.getEventType() != XmlPullParser.START_TAG) {
                 //Saltem al seguent event
                 continue;
             }
-            //Obtenim el nom de l'etiqueta
+            //We get the name of the label
             String name = parser.getName();
-            // Si aquesta etiqueta és una entrada de noticia
+            // If this tag is a news post
             if (name.equals("item")) {
-                //Afegim l'entrada a la llista
+                //We add the entry to the list
                 listaItems.add(leerItem(parser));
             } else {
                 saltar(parser);
@@ -64,7 +64,7 @@ public class XmlParser {
         return listaItems;
     }
 
-    //Aquesta funció serveix per saltar-se una etiqueta i les seves subetiquetes aniuades.
+    //This function is used to skip a tag and its nested sub-tags.
     private void saltar(XmlPullParser parser) throws XmlPullParserException, IOException {
         //Si no és un comenament d'etiqueta: ERROR
         if (parser.getEventType() != XmlPullParser.START_TAG) {
@@ -72,7 +72,7 @@ public class XmlParser {
         }
         int depth = 1;
 
-        //Comprova que ha passat per tantes etiquetes de començament com acabament d'etiqueta
+        //Check that you have gone through as many start tags as finishing tags
 
         while (depth != 0) {
             switch (parser.next()) {
@@ -88,8 +88,8 @@ public class XmlParser {
         }
     }
 
-    //Analitza el contingut d'una entrada. Si troba un ttol, resum o enllaç, crida els mètodes de lectura
-    //propis per processar-los. Si no, ignora l'etiqueta.
+    //Analyzes the content of an entry. If you find a title, summary or link, call the reading methods
+    //to process them. If not, ignore the tag.
     private Entrada leerItem(XmlPullParser parser) throws XmlPullParserException, IOException {
         String titulo = null;
         String enlace = null;
@@ -99,65 +99,65 @@ public class XmlParser {
         String categoria = null;
         String imagen = null;
 
-        //L'etiqueta actual ha de ser "item"
+        //Current label must be "item"
         parser.require(XmlPullParser.START_TAG, ns, "item");
 
-        //Mentre que no acabe l'etiqueta de "item"
+        //While the "item" tag doesn't end
         while (parser.next() != XmlPullParser.END_TAG) {
-            //Ignora fins que no trobem un començament d'etiqueta
+            //Ignore until we find a label start
             if (parser.getEventType() != XmlPullParser.START_TAG) {
                 continue;
             }
-            //Obtenim el nom de l'etiqueta
+            //We get the name of the label
             String etiqueta = parser.getName();
-            if (etiqueta.equals("title")) { //titulo noticia
+            if (etiqueta.equals("title")) { //title news
                 titulo = leerEtiqueta(parser, "title");
-            } else if (etiqueta.equals("media:description")) { // resumen
+            } else if (etiqueta.equals("media:description")) { // summary
                 descripcion = leerEtiqueta(parser, "media:description");
             } else if (etiqueta.equals("link")) { //enlace
                 enlace = leerEtiqueta(parser, "link");
-            } else if (etiqueta.equals("pubDate")) { //fecha
+            } else if (etiqueta.equals("pubDate")) { //date
                 fecha = leerEtiqueta(parser, "pubDate");
-            } else if (etiqueta.equals("dc:creator")) { //autor
+            } else if (etiqueta.equals("dc:creator")) { //Author
                 autor = leerEtiqueta(parser, "dc:creator");
-            } else if (etiqueta.equals("category")) { //categoria
+            } else if (etiqueta.equals("category")) { //category
                 if (categoria == null) {
                     categoria = (leerEtiqueta(parser, "category"));
                 } else {
                     categoria += (", " + leerEtiqueta(parser, "category"));
                 }
-            } else if (etiqueta.equals("media:thumbnail")) { //imagen
+            } else if (etiqueta.equals("media:thumbnail")) { //image
                 imagen = leerImagen(parser);
             } else {
-                //les altres etiquetes les saltem
+                //the other labels we skip
                 saltar(parser);
             }
         }
-        //Creem una nova entrada amb aquestes dades i la retornem
+        //We create a new entry with this data and return it
         return new Entrada(titulo, descripcion, enlace, autor, fecha, categoria, imagen);
     }
 
     private String leerEtiqueta(XmlPullParser parser, String etiqueta) throws IOException, XmlPullParserException {
-        //L'etiqueta actual ha de ser "pubDate"
+        //Current label must be "pubDate"
         parser.require(XmlPullParser.START_TAG, ns, etiqueta);
-        //Llegeix
+        //reads
         String contenido = llegeixText(parser);
-        //Fi d'etiqueta
+        //End of label
         parser.require(XmlPullParser.END_TAG, ns, etiqueta);
         return contenido;
     }
 
     private String leerImagen(XmlPullParser parser) throws IOException, XmlPullParserException {
-        //L'etiqueta actual ha de ser "media:thumbnail"
+        //The current label should be "media: thumbnail"
         parser.require(XmlPullParser.START_TAG, ns, "media:thumbnail");
-        //Llegeix atribut URL
+        //Read URL attribute
         String imagen = parser.getAttributeValue(null, "url");
-        //Fi d'etiqueta no tiene
+        //Fi label has no
         parser.next();
         return imagen;
     }
 
-    //Extrau el valor de text per les etiquetes titol, resum
+    // Extract the text value from the title, summary tags
     private String llegeixText(XmlPullParser parser) throws IOException, XmlPullParserException {
         String resultat = "";
 
@@ -168,7 +168,7 @@ public class XmlParser {
         return resultat;
     }
 
-    //Aquesta classe representa una entrada de noticia del RSS Feed
+    //This class represents a RSS Feed news entry
     public static class Entrada implements Serializable {
         public final String titulo;
         public final String enlace;
