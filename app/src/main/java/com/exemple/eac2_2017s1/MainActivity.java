@@ -35,7 +35,9 @@ import static com.exemple.eac2_2017s1.XmlParser.Entrada;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     // RSS FEED
-    private static final String URL = "http://estaticos.marca.com/rss/portada.xml";
+    //private static final String URL = "http://estaticos.marca.com/rss/portada.xml";
+    //private static final String URL = "http://balita.net.ph/feed/";
+    private static final String URL = "http://inquirer.net/fullfeed/";
 
     //Inicializacion
     private RecyclerView recyclerView;
@@ -93,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (id == R.id.action_actualizar) {
             cargaNoticias();
             return true;
-            //Si se presiona la el boton buscar filtra la lista
+            //If the search button is pressed, filter the list
         } else if (id == R.id.action_buscar) {
             mostrarBarraBusqueda();
             return true;
@@ -131,9 +133,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void downloadImages(List<Entrada> result) {
         for (Entrada entrada : result) {
             try {
-                // Agafem la URL que s'ha passat com argument
+                // Let's take the URL that has been passed as an argument
                 URL imatge = new URL(entrada.imagen);
-                // Creem l'input i un buffer on anirem llegint la informació
+                // We create the input and a buffer where we will read the information
                 InputStream inputstream = (InputStream) imatge.getContent();
                 byte[] bufferImatge = new byte[1024];
                 // Creem la sortida, és a dir, allà on guardarem la informació (ruta de la imatge)
@@ -156,21 +158,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     //Descarrega XML, l'analitza i crea amb ell un codi HTML que retorna com String
+    //Download XML, l'analitza and create an HTML code that returns with String
     private List<Entrada> carregaXMLdelaXarxa(String urlString) throws XmlPullParserException, IOException {
+
         List<Entrada> entradas = null;
         InputStream stream = null;
         //Creem una instncia de l'analitzador
         XmlParser analitzador = new XmlParser();
         //Cadena on construirem el codi HTML que mostrara el widget webView
         StringBuilder htmlString = new StringBuilder();
+
         try {
+
             //Obrim la connexio
             //stream = obreConnexioHTTP(urlString);
             stream = ObreConnexioHTTP(urlString);
+
             //Obtenim la llista d'entrades a partir de l'stream de dades
+            //Get the list of entries from the stream of data
             entradas = analitzador.analitza(stream);
+            Log.d("marker2", "doInBackground: error here?");
             //adapter.update(entrades);
             //adapter.notifyDataSetChanged();
+
         } catch (Exception e) {
             //Toast.makeText(getBaseContext(), e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             e.printStackTrace();
@@ -178,9 +188,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             //Tanquem l'stream una vegada hem terminat de treballar amb ell
             if (stream != null) {
                 stream.close();
+
             }
         }
+
         return entradas;
+
     }
 
     //Obre una connexió HTTP a partir d'un URL i retorna un InputStream
@@ -285,20 +298,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         @Override
-        //El que s'executar en el background
+        //What will run in the background
         protected List<Entrada> doInBackground(String... urls) {
+
             List<Entrada> lista = null;
+
             try {
-                //Carreguem l'XML
+                //Let's load the XML
+                Log.d("marker1", "doInBackground: error here?");
                 lista = carregaXMLdelaXarxa(urls[0]);
-                //insertamos en la db
+
+                //we insert in the db
                 dbInsertAll(lista);
-                //descargamos las imagenes
+
+                //download the images
                 downloadImages(lista);
+
             } catch (IOException | XmlPullParserException e) {
                 //Error
+
             }
+
             return lista;
+
         }
 
 
